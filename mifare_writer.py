@@ -20,7 +20,7 @@ class MifareWriter:
         if result != 0:
             raise RuntimeError("Failed to connect to reader")
 
-    def write_articles(self, start_block=4):  # Add start_block parameter
+    def write_articles(self, start_block=8):  # Add start_block parameter
         block = start_block
         for article, qty in self.articles.items():
             text = f"{article}:{qty}"[:16].encode()
@@ -28,6 +28,11 @@ class MifareWriter:
             print(f"Wrote '{text.decode()}' to block {block}: {result}")
             block += 1
 
+    def read_block_string(self, key: bytes, block_num: int) -> str:
+        self.connect()  # Ensure connected
+        result = self.cardlib.readblockstring(key, block_num)
+        data = result.decode('utf-8') if result else ""
+        return data
 
     def close(self):
         self.cardlib.cleanup()

@@ -76,7 +76,29 @@ class MainWindow(QMainWindow):
         
         self.status_label = QLabel("Ready - Scan tags with 125kHz reader")
         layout.addWidget(self.status_label)
-        
+        # Read
+
+        read_group = QGroupBox("Read Data Blocks")
+        read_layout = QHBoxLayout(read_group)
+
+        self.key_read_input = QLineEdit()
+        self.key_read_input.setPlaceholderText("Auth Key hex (FFFFFFFFFFFF)")
+        read_layout.addWidget(QLabel("Key:"))
+        read_layout.addWidget(self.key_read_input)
+
+        self.block_read_input = QLineEdit()
+        self.block_read_input.setPlaceholderText("Block number (1)")
+        read_layout.addWidget(QLabel("Block:"))
+        read_layout.addWidget(self.block_read_input)
+
+        self.read_btn = QPushButton("Read Block")
+        self.read_btn.clicked.connect(self.read_block)
+        read_layout.addWidget(self.read_btn)
+
+        self.read_result = QLabel("Data:")
+        read_layout.addWidget(self.read_result)
+
+        layout.addWidget(read_group)
     def connect_signals(self):
         self.signals.article_added.connect(self.add_article)
         
@@ -150,6 +172,23 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"✅ Wrote {len(self.articles)} articles starting block {block}")
         except Exception as e:
             self.status_label.setText(f"❌ Write failed: {e}")
+
+    def read_block(self):
+        if not self.writer:
+            self.status_label.setText("❌ Connect the reader first!")
+            return
+        try:
+            key = self.key_read_input.text().strip().replace(" ", "")
+            if not key:
+                self.status_label.setText("❌ Authentication key required")
+                return
+            block_num = int(self.block_read_input.text())
+            data = self.writer.read_block_string(key.encode(), block_num)
+            self.read_result.setText(f"Data (Block {block_num}): {data}")
+            self.status_label.setText(f"✅ Read block {block_num} successful")
+        except Exception as e:
+            self.status_label.setText(f"❌ Read error: {e}")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
